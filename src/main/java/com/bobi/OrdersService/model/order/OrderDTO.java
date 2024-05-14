@@ -2,20 +2,23 @@ package com.bobi.OrdersService.model.order;
 
 import com.bobi.OrdersService.model.order.billing_data.BillingData;
 import com.bobi.OrdersService.model.order.orderedProduct.OrderedProduct;
-import lombok.Data;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
-@Data
+@Getter
+@Setter
+@ToString
 public class OrderDTO {
-    private final String orderId = "order:" + UUID.randomUUID();
-    private final Instant time = Instant.now();
-    private final List<OrderedProduct> orderedProducts;
+    private String orderId;
+    private Instant time;
+    private List<OrderedProduct> orderedProducts;
     private BillingData billingData;
 
-    public OrderDTO(List<OrderedProduct> orderedProducts, BillingData billingData) {
+    public OrderDTO(String orderId, Instant time, List<OrderedProduct> orderedProducts, BillingData billingData) {
+        this.orderId = orderId;
+        this.time = time;
         this.orderedProducts = orderedProducts;
         this.billingData = billingData;
     }

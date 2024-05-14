@@ -1,14 +1,15 @@
 package com.bobi.OrdersService.service;
 
 import com.bobi.OrdersService.mapper.OrderMapper;
+import com.bobi.OrdersService.model.order.Order;
 import com.bobi.OrdersService.model.order.OrderDTO;
 import com.bobi.OrdersService.model.order.billing_data.BillingData;
 import com.bobi.OrdersService.model.order.orderedProduct.OrderedProduct;
 import com.bobi.OrdersService.remote.ShoppingCartServiceClient;
 import com.bobi.OrdersService.repository.OrderRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -22,8 +23,8 @@ public class OrderServiceImpl implements OrderService {
 
     private OrderRepository orderRepository;
     private ShoppingCartServiceClient shoppingCartServiceClient;
-    @Autowired
     private OrderMapper orderMapper;
+    private ObjectMapper objectMapper;
 
     @Override
     public OrderDTO createOrder(BillingData billingData, String cartId) throws JsonProcessingException {
@@ -32,7 +33,11 @@ public class OrderServiceImpl implements OrderService {
         for (String cartProduct : cartProducts) {
             productMap.compute(cartProduct, (key, value) -> {
                 if (value == null) {
-                    return new OrderedProduct(cartProduct);
+                    try {
+                        return objectMapper.readValue(cartProduct, OrderedProduct.class);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
                 } else {
                     value.setQuantity(value.getQuantity() + 1);
                     return value;
@@ -40,11 +45,17 @@ public class OrderServiceImpl implements OrderService {
             });
         }
         List<OrderedProduct> orderedProducts = new ArrayList<>(productMap.values());
-        return orderMapper.toDTO(orderRepository.createOrder(billingData, orderedProducts));
+        Order newOrder = orderRepository.createOrder(billingData, orderedProducts);
+        OrderDTO returnorder = orderMapper.toDTO(newOrder);
+        System.out.println(returnorder + "!!!!!!!!!after toDTO mapping");
+        // return orderMapper.toDTO(newOrder);
+        return returnorder;
     }
 
     @Override
     public OrderDTO getOrder(String orderId) throws JsonProcessingException {
-        return orderMapper.toDTO(orderRepository.getOrder(orderId));
+        Order order = orderRepository.getOrder(orderId);
+        System.out.println("+++++++++"+order+"++++++++++");
+        return orderMapper.toDTO(order);
     }
 }
